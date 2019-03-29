@@ -1,0 +1,27 @@
+---
+configVersion: '1.0'
+headless: true
+storeRootURL: https://perfing.test
+groups:
+    cms:
+        urls:
+            - '/'
+        includeForLayoutHandles:
+            - cms_index_index
+        excludeForLayoutHandles: []
+    product:
+        urls:
+            - '/breathe-easy-tank.html'
+            - '/push-it-messenger-bag.html'
+            - '/argus-all-weather-tank.html'
+        includeForLayoutHandles:
+            - catalog_product_view
+        excludeForLayoutHandles: []
+    category:
+        urls:
+            - '/women/tops-women.html'
+            - '/women/bottoms-women.html'
+            - '/men.html'
+        includeForLayoutHandles:
+            - catalog_category_view
+        excludeForLayoutHandles: []
