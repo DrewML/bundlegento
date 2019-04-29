@@ -3,7 +3,6 @@
  * See COPYING.txt for license details.
  */
 
-import { Config } from './configLocator';
 import { mergeSets } from './mergeSets';
 import fromEntries from 'fromentries';
 import { Logger } from './logger';
@@ -33,7 +32,7 @@ export function createSplits(entriesByGroup: EntriesByGroup, opts: Opts) {
     }
 
     const finalGroups = fromEntries(
-        Object.entries(entriesByGroup).map(([name, deps]) => {
+        Object.keys(entriesByGroup).map(name => {
             const conf = {
                 name,
                 modules: new Set(),

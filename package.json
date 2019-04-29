@@ -52,6 +52,7 @@
     "fromentries": "^1.1.0",
     "meow": "^5.0.0",
     "puppeteer": "^1.12.2",
+    "requirejs": "^2.3.6",
     "source-map-support": "^0.5.12"
   }
 }

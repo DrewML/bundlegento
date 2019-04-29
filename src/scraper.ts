@@ -16,9 +16,13 @@ const preloadScript = readFileSync(require.resolve('./preload'), 'utf8');
 type Opts = { logger: Logger };
 export async function getModulesByGroups(config: Config, { logger }: Opts) {
     const groups = fromEntries(
-        Object.keys(config.groups).map(
-            key => [key, new Set() as Set<string>] as [string, Set<string>],
-        ),
+        Object.keys(config.groups).map(key => {
+            const pair = [key, new Set() as Set<string>] as [
+                string,
+                Set<string>
+            ];
+            return pair;
+        }),
     );
 
     for (const [group, modules] of Object.entries(groups)) {
@@ -46,12 +50,9 @@ export async function getModulesForPages(
     // to serial execution for large configs
     const deps = flatten(
         await Promise.all(
-            urls.map(url => {
-                return getModulesForPage(
-                    browser,
-                    new URL(url, rootURL).toString(),
-                );
-            }),
+            urls.map(url =>
+                getModulesForPage(browser, new URL(url, rootURL).toString()),
+            ),
         ),
     );
 
@@ -61,6 +62,7 @@ export async function getModulesForPages(
 
 async function getModulesForPage(browser: Browser, url: string) {
     const page = await browser.newPage();
+    // Instrument the page to catch all loaded modules
     await page.evaluateOnNewDocument(preloadScript);
 
     await page.goto(url, {
@@ -70,6 +72,5 @@ async function getModulesForPage(browser: Browser, url: string) {
     const modules: string[] = await page.evaluate('require.__loaded__');
 
     await page.close();
-
     return modules;
 }

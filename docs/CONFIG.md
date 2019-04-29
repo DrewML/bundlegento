@@ -13,7 +13,7 @@ bundlegento --init
 
 ## Supported Formats
 
-This project uses [`cosmiconfig`](https://github.com/davidtheclark/cosmiconfig) to automatically discover, load, and parse your configuration file, which enables support for a wide variety of configuration formats.
+[`cosmiconfig`](https://github.com/davidtheclark/cosmiconfig) is used to automatically discover, load, and parse your configuration file, which enables support for a wide variety of configuration formats.
 
 The following filenames/formats are recognized:
 
@@ -30,7 +30,7 @@ If `bundlegento` is not finding your configuration file, you can view the [algor
 
 ## Overriding Configuration Search
 
-If you'd prefer to keep use a different name for your configuration file, or skip searching of the filesystem, you can pass in an absolute path:
+If you'd prefer to use a different name for your configuration file, or skip searching of the filesystem, you can pass in an absolute path:
 
 ```sh
 bundlegento --config /Users/me/mystore/mybundlegentoconfig.json
