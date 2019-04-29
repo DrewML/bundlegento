@@ -2,8 +2,13 @@ const http = require('http');
 const { join } = require('path');
 const finalHandler = require('finalhandler');
 const serveStatic = require('serve-static');
-const { defaultLogger } = require('../logger');
 const { getModulesByGroups } = require('../scraper');
+
+const logger = {
+    log() {},
+    warn() {},
+    error() {},
+};
 
 test('Fetches all loaded dependencies on a page', async () => {
     const { url, close } = await createTestServer('basic');
@@ -19,11 +24,81 @@ test('Fetches all loaded dependencies on a page', async () => {
                 },
             },
         },
-        { logger: defaultLogger },
+        { logger },
     );
     await close();
     expect(results).toEqual({
         test: new Set(['b', 'a', 'main']),
+    });
+});
+
+test('Fetches correct dependencies for multiple pages/groups', async () => {
+    // TODO: Faster HTTP server
+    jest.setTimeout(10000);
+    const { url, close } = await createTestServer('diagram');
+    const results = await getModulesByGroups(
+        {
+            configVersion: '1.0',
+            storeRootURL: url,
+            groups: {
+                cart: {
+                    urls: ['/cart'],
+                    includeForLayoutHandles: [],
+                    excludeForLayoutHandles: [],
+                },
+                category: {
+                    urls: ['/category'],
+                    includeForLayoutHandles: [],
+                    excludeForLayoutHandles: [],
+                },
+                cms: {
+                    urls: ['/cms'],
+                    includeForLayoutHandles: [],
+                    excludeForLayoutHandles: [],
+                },
+                product: {
+                    urls: ['/product'],
+                    includeForLayoutHandles: [],
+                    excludeForLayoutHandles: [],
+                },
+            },
+        },
+        { logger },
+    );
+    await close();
+    expect(results).toEqual({
+        cart: new Set([
+            'cart',
+            'libs/jquery',
+            'libs/cart-api',
+            'libs/colorpicker',
+            'libs/shipping',
+            'libs/fancyselect',
+        ]),
+        category: new Set([
+            'category',
+            'libs/jquery',
+            'libs/tooltip',
+            'libs/options',
+            'libs/magnifier',
+            'libs/grid',
+        ]),
+        cms: new Set([
+            'cms',
+            'libs/jquery',
+            'libs/tooltip',
+            'libs/colorpicker',
+            'libs/carousel',
+            'libs/calendar',
+        ]),
+        product: new Set([
+            'product',
+            'libs/jquery',
+            'libs/swatches',
+            'libs/colorpicker',
+            'libs/magnifier',
+            'libs/addtocart',
+        ]),
     });
 });
 
