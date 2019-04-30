@@ -12,11 +12,19 @@ type EntriesByGroup = Record<string, Set<string>>;
 type Group = {
     name: string | number;
     modules: Set<string>;
-    sharedSplitNames: Set<string>;
+    sharedBundleNames: Set<string>;
+};
+
+export type BundleSpec = {
+    groups: Record<string, Group>;
+    sharedGroups: Record<string, Set<string>>;
 };
 
 type Opts = { logger?: Logger };
-export function createSplits(entriesByGroup: EntriesByGroup, opts: Opts) {
+export function computeBundles(
+    entriesByGroup: EntriesByGroup,
+    opts: Opts,
+): BundleSpec {
     const allDeps = Array.from(mergeSets(Object.values(entriesByGroup)));
     const depsWithGroups = fromEntries(
         allDeps.map(dep => {
@@ -36,7 +44,7 @@ export function createSplits(entriesByGroup: EntriesByGroup, opts: Opts) {
             const conf = {
                 name,
                 modules: new Set(),
-                sharedSplitNames: new Set(['all']),
+                sharedBundleNames: new Set(['all']),
             };
             return [name, conf] as [string, Group];
         }),
@@ -63,8 +71,8 @@ export function createSplits(entriesByGroup: EntriesByGroup, opts: Opts) {
                 sharedGroups[key] || new Set());
 
             modules.add(dep);
-            finalGroups[group1].sharedSplitNames.add(key);
-            finalGroups[group2].sharedSplitNames.add(key);
+            finalGroups[group1].sharedBundleNames.add(key);
+            finalGroups[group2].sharedBundleNames.add(key);
         }
 
         // Move to the global shared file

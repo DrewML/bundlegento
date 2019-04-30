@@ -3,7 +3,7 @@
  * See COPYING.txt for license details.
  */
 
-const { createSplits } = require('../bundleSplitter');
+const { computeBundles } = require('../computeBundles');
 
 test('Generates bundles matching diagram in docs directory', () => {
     const entriesByGroup = {
@@ -18,8 +18,8 @@ test('Generates bundles matching diagram in docs directory', () => {
         category: ['jquery', 'tooltip', 'options', 'magnifier', 'grid'],
         cart: ['jquery', 'cart-api', 'colorpicker', 'shipping', 'fancyselect'],
     };
-    const results = createSplits(entriesByGroup, {});
-    expect(results).toMatchInlineSnapshot(`
+    const bundleSpec = computeBundles(entriesByGroup, {});
+    expect(bundleSpec).toMatchInlineSnapshot(`
 Object {
   "groups": Object {
     "cart": Object {
@@ -29,7 +29,7 @@ Object {
         "fancyselect",
       },
       "name": "cart",
-      "sharedSplitNames": Set {
+      "sharedBundleNames": Set {
         "all",
       },
     },
@@ -39,7 +39,7 @@ Object {
         "grid",
       },
       "name": "category",
-      "sharedSplitNames": Set {
+      "sharedBundleNames": Set {
         "all",
         "cms-category-shared",
         "product-category-shared",
@@ -51,7 +51,7 @@ Object {
         "calendar",
       },
       "name": "cms",
-      "sharedSplitNames": Set {
+      "sharedBundleNames": Set {
         "all",
         "cms-category-shared",
       },
@@ -62,7 +62,7 @@ Object {
         "addtocart",
       },
       "name": "product",
-      "sharedSplitNames": Set {
+      "sharedBundleNames": Set {
         "all",
         "product-category-shared",
       },

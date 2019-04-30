@@ -27,7 +27,7 @@ Note that the tool does _not_ keep an actual graph of modules, but instead maint
 
 ### Splitting
 
-_[Source](/src/bundleSplitter.ts)_
+_[Source](/src/computeBundles.ts)_
 
 With module usage data obtained during the fetching phase, modules can now be compared between groups to determine which are unique to a page, and which should be broken out to shared bundles.
 
@@ -41,7 +41,7 @@ This algorithm is illustrated in the diagram below:
 
 ![bundle splitting diagram](diagram.png)
 
-_Note: A unit-test in [`bundleSplitter.test.js`](/src/__tests__/bundleSplitter.test.js) verifies the splitting algorithm matches this diagram_
+_Note: A unit-test in [`computeBundles.test.js`](/src/__tests__/computeBundles.test.js) verifies the splitting algorithm matches this diagram_
 
 In the diagram, a colored/faded module means that it has been relocated to one of the shared bundles.
 

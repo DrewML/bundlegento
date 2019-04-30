@@ -28,10 +28,7 @@ export async function getAllLanguages(staticContentDir: string, theme: Theme) {
     return themes.filter(t => reLang.test(t));
 }
 
-const cache = new Map();
 async function getVendorsRoot(staticContentDir: string) {
-    if (cache.has(staticContentDir)) return cache.get(staticContentDir);
-
     // Note: When a relative path is used, maybe we,
     // should be checking relative to the config file
     // location, instead of process.cwd()?
@@ -39,20 +36,17 @@ async function getVendorsRoot(staticContentDir: string) {
         ? staticContentDir
         : join(process.cwd(), staticContentDir);
 
-    // Warning: `deployed_version` exists (most of the time)
-    // even when static asset signing is disabled
+    // Note: `deployed_version.txt` can exist even when
+    // static asset signing is disabled
+    const versionFilePath = join(staticDir, 'deployed_version.txt');
     const [, version] = await wrapP(
-        fs
-            .readFile(join(staticDir, 'deployed_version.txt'), 'utf8')
-            .then(v => v.trim()),
+        fs.readFile(versionFilePath, 'utf8').then(v => v.trim()),
     );
     const [accessErr] = await wrapP(
         fs.access(join(staticDir, version || 'CauseAnErrorOnPurpose')),
     );
 
-    const root = accessErr
+    return accessErr
         ? join(staticContentDir, 'frontend')
         : join(staticContentDir, version, 'frontend');
-    cache.set(staticContentDir, root);
-    return root;
 }

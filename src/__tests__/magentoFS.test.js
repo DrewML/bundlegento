@@ -22,7 +22,7 @@ test('Finds all languages when static signing is disabled', async () => {
     expect(languages).toEqual(['en_US', 'nl_BE']);
 });
 
-test.only('Finds theme that exists when static signing is enabled', async () => {
+test('Finds theme that exists when static signing is enabled', async () => {
     const staticDir = fixtureFor('signedStatic');
     const theme = { name: 'luma', vendor: 'Magento' };
     const exists = await themeExists(staticDir, theme);
@@ -38,7 +38,7 @@ test('Does not find theme that does not exist when static signing is enabled', a
 
 test('Finds theme that exists when static signing is disabled', async () => {
     const staticDir = fixtureFor('unsignedStatic');
-    const theme = { name: 'luma', vendor: 'Magento' };
+    const theme = { name: 'blank', vendor: 'Magento' };
     const exists = await themeExists(staticDir, theme);
     expect(exists).toBe(true);
 });

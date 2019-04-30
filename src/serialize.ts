@@ -7,7 +7,7 @@ import fromEntries from 'fromentries';
 
 // For better console logging with types not supported in JSON
 // (mainly Map/Set)
-export default function serialize(data: object | any[]) {
+export function serialize(data: object | any[]) {
     return JSON.stringify(data, replace, 2);
 }
 

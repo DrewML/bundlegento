@@ -26,7 +26,10 @@ export type Config = {
 
 type Opts = { configPath?: string; logger: Logger };
 // TODO: JSON Schema + validation
-export default async function({ configPath, logger }: Opts): Promise<Config> {
+export async function configLocator({
+    configPath,
+    logger,
+}: Opts): Promise<Config> {
     const configExplorer = cosmiconfig('bundlegento');
     logger.log('Looking for configuration file');
     const config = configPath
