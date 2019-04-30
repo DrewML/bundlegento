@@ -1,3 +1,8 @@
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
 const http = require('http');
 const { join } = require('path');
 const finalHandler = require('finalhandler');

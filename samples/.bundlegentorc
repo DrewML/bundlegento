@@ -2,6 +2,7 @@
 configVersion: '1.0'
 headless: true
 storeRootURL: https://perfing.test
+staticFolderPath: /Users/andrewlevine/sites/perfing/pub/static
 groups:
     cms:
         urls:
