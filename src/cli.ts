@@ -8,6 +8,10 @@ import meow from 'meow';
 import { runForProject } from './';
 import { writeSampleConfig } from './writeSampleConfig';
 
+/**
+ * TODO:
+ * 1. Add setup wizard to `--init` with inquirer to set defaults
+ */
 const { flags } = meow(
     `
     Usage

@@ -4,6 +4,8 @@
  */
 
 import vm from 'vm';
+import { Logger } from './logger';
+import { Config } from './configLocator';
 import { readFileSync } from 'fs';
 
 const requirejs = readFileSync(require.resolve('requirejs/require.js'), 'utf8');
@@ -23,4 +25,14 @@ export function createResolver(requireConfig: RequireConfig) {
     const nameToUrl = sandbox.require.s.contexts._.nameToUrl;
 
     return (id: string, ext = '.js') => nameToUrl(id, ext);
+}
+
+/**
+ * 1. Get all languages for theme
+ * 2. For each language, run bundling
+ * 3. Return data
+ */
+type Opts = { logger: Logger };
+export async function createBundles(config: Config, opts: Opts) {
+    //
 }

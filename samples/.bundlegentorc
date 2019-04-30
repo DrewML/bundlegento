@@ -2,6 +2,9 @@
 configVersion: '1.0'
 headless: true
 storeRootURL: https://perfing.test
+theme:
+    name: luma
+    vendor: Magento
 staticFolderPath: /Users/andrewlevine/sites/perfing/pub/static
 groups:
     cms:

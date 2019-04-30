@@ -16,6 +16,10 @@ export type Config = {
     configVersion: '1.0';
     headless?: boolean;
     storeRootURL: string;
+    theme: {
+        name: string;
+        vendor: string;
+    };
     staticFolderPath: string;
     groups: Record<string, GroupConfig>;
 };
