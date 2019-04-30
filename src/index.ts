@@ -18,6 +18,8 @@ export async function runForProject({
 }: Opts) {
     const config = await configLocator({ configPath, logger });
     const modulesByGroups = await getModulesByGroups(config, { logger });
+    // TODO: Cache results here, and add a `--lastRun` option to bundle
+    // based on the previously-fetched data
     const bundleSpec = computeBundles(modulesByGroups, { logger });
 
     await fs.writeFile(join(__dirname, '../output.txt'), serialize(bundleSpec));

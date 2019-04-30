@@ -9,10 +9,12 @@
   },
   "scripts": {
     "build": "tsc",
-    "watch": "tsc --watch",
-    "test": "jest -i",
-    "test:watch": "jest --watch",
-    "license": "scripts/license-check"
+    "format": "prettier --write $(head -1 prettier-globs)",
+    "format:check": "prettier --list-different $(head -1 prettier-globs)",
+    "license": "scripts/license-check",
+    "test": "npm run format:check && npm run license && jest -i",
+    "test:unit": "jest unit --watch",
+    "watch": "tsc --watch"
   },
   "engines": {
     "node": ">=10.0.0"
