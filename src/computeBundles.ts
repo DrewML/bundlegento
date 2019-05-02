@@ -10,13 +10,13 @@ import { Logger } from './logger';
 type EntriesByGroup = Record<string, Set<string>>;
 
 type Group = {
-    name: string | number;
+    name: string;
     modules: Set<string>;
     sharedBundleNames: Set<string>;
 };
 
 export type BundleSpec = {
-    groups: Record<string, Group>;
+    groups: Map<string, Group>;
     sharedGroups: Record<string, Set<string>>;
 };
 
@@ -39,7 +39,7 @@ export function computeBundles(
         }
     }
 
-    const finalGroups = fromEntries(
+    const finalGroups = new Map(
         Object.keys(entriesByGroup).map(name => {
             const conf = {
                 name,
@@ -59,7 +59,7 @@ export function computeBundles(
         // that group
         if (groups.size === 1) {
             const [group] = groups;
-            finalGroups[group].modules.add(dep);
+            finalGroups.get(group)!.modules.add(dep);
         }
 
         // If the dependency is in 2 groups, assign it
@@ -71,8 +71,8 @@ export function computeBundles(
                 sharedGroups[key] || new Set());
 
             modules.add(dep);
-            finalGroups[group1].sharedBundleNames.add(key);
-            finalGroups[group2].sharedBundleNames.add(key);
+            finalGroups.get(group1)!.sharedBundleNames.add(key);
+            finalGroups.get(group2)!.sharedBundleNames.add(key);
         }
 
         // Move to the global shared file

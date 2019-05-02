@@ -25,39 +25,41 @@ export async function getModulesByGroups(config: Config, { logger }: Opts) {
         }),
     );
 
+    const browser = await puppeteer.launch({ headless: config.headless });
+    const [firstURL] = Object.values(config.groups)[0].urls;
+    const requireConfig = await getRequireConfig(
+        browser,
+        new URL(firstURL, config.storeRootURL).toString(),
+    );
+
     for (const [group, modules] of Object.entries(groups)) {
         logger.log(`Fetching modules for group ${group}`);
         const { urls } = config.groups[group];
         const modulesInUse = await getModulesForPages(
+            browser,
             urls,
             config.storeRootURL,
-            config.headless,
         );
         modulesInUse.forEach(modules.add.bind(modules));
     }
 
-    return groups;
+    await browser.close();
+
+    return { groups, requireConfig };
 }
 
 export async function getModulesForPages(
+    browser: Browser,
     urls: string[],
     rootURL: string,
-    headless: boolean = true,
 ) {
-    const browser = await puppeteer.launch({ headless: headless });
-
-    // Parallel browser tabs for now, but _might_ need to change
-    // to serial execution for large configs
-    const deps = flatten(
+    return flatten(
         await Promise.all(
             urls.map(url =>
                 getModulesForPage(browser, new URL(url, rootURL).toString()),
             ),
         ),
     );
-
-    await browser.close();
-    return deps;
 }
 
 async function getModulesForPage(browser: Browser, url: string) {
@@ -73,4 +75,14 @@ async function getModulesForPage(browser: Browser, url: string) {
 
     await page.close();
     return modules;
+}
+
+async function getRequireConfig(browser: Browser, url: string) {
+    const page = await browser.newPage();
+    await page.goto(url, {
+        waitUntil: ['load', 'networkidle0'],
+    });
+    return page.evaluate('require.s.contexts._.config') as Promise<
+        RequireConfig
+    >;
 }

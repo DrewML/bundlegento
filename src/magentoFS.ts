@@ -23,14 +23,14 @@ export async function getAllLanguages(staticContentDir: string, theme: Theme) {
     const vendorsRoot = await getVendorsRoot(staticContentDir);
     const themeDir = join(vendorsRoot, theme.vendor, theme.name);
     const themes = await fs.readdir(themeDir);
-    const reLang = /^[a-z]{2}(?:_[a-z]{2})?$/i;
     // filter out any extra files/folders that aren't locales
+    const reLang = /^[a-z]{2}(?:_[a-z]{2})?$/i;
     return themes.filter(t => reLang.test(t));
 }
 
 async function getVendorsRoot(staticContentDir: string) {
-    // Note: When a relative path is used, maybe we,
-    // should be checking relative to the config file
+    // Note: When a relative path is used, maybe we
+    // should be looking relative to the config file
     // location, instead of process.cwd()?
     const staticDir = isAbsolute(staticContentDir)
         ? staticContentDir

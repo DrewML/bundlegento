@@ -17,7 +17,7 @@ const logger = {
 
 test('Fetches all loaded dependencies on a page', async () => {
     const { url, close } = await createTestServer('basic');
-    const results = await getModulesByGroups(
+    const { groups } = await getModulesByGroups(
         {
             configVersion: '1.0',
             storeRootURL: url,
@@ -32,7 +32,7 @@ test('Fetches all loaded dependencies on a page', async () => {
         { logger },
     );
     await close();
-    expect(results).toEqual({
+    expect(groups).toEqual({
         test: new Set(['b', 'a', 'main']),
     });
 });
@@ -41,7 +41,7 @@ test('Fetches correct dependencies for multiple pages/groups', async () => {
     // TODO: Faster HTTP server
     jest.setTimeout(10000);
     const { url, close } = await createTestServer('diagram');
-    const results = await getModulesByGroups(
+    const { groups } = await getModulesByGroups(
         {
             configVersion: '1.0',
             storeRootURL: url,
@@ -71,7 +71,7 @@ test('Fetches correct dependencies for multiple pages/groups', async () => {
         { logger },
     );
     await close();
-    expect(results).toEqual({
+    expect(groups).toEqual({
         cart: new Set([
             'cart',
             'libs/jquery',

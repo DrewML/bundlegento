@@ -21,3 +21,7 @@ See [`CUSTOM.md`](docs/CUSTOM.md)
 ## How Does it Work?
 
 See [`HOW.md`](docs/HOW.md)
+
+## Caveats
+
+See [`CAVEATS.md`](docs/CAVEATS.md)
