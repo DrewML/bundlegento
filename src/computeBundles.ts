@@ -17,7 +17,7 @@ export type Group = {
 
 export type BundleSpec = {
     groups: Map<string, Group>;
-    sharedGroups: Record<string, Set<string>>;
+    sharedGroups: Map<string, Set<string>>;
 };
 
 type Opts = { logger?: Logger };

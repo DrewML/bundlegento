@@ -4,10 +4,13 @@
  */
 
 import vm from 'vm';
+import { wrapP } from './wrapP';
 import { join, parse } from 'path';
 import { Logger } from './logger';
 import { Config } from './configLocator';
-import { readFileSync, promises as fs } from 'fs';
+// TODO: Switch from promisify to fs promises when not experimental in node
+import { promisify as p } from 'util';
+import { readFileSync, readFile, writeFile } from 'fs';
 import { BundleSpec } from './computeBundles';
 import { renameModule, wrapTextModule } from './bundleHelpers';
 import { themeExists, getAllLanguages } from './magentoFS';
@@ -49,7 +52,7 @@ export async function createBundles(opts: Opts) {
 
     for (const [name, group] of groups) {
         const bundle = await generateBundleFile([...group.modules], resolve);
-        await fs.writeFile(
+        await p(writeFile)(
             `/Users/andrewlevine/bundlegento/${name}.js`,
             bundle,
         );
@@ -57,9 +60,8 @@ export async function createBundles(opts: Opts) {
 
     for (const [name, group] of sharedGroups) {
         const bundle = await generateBundleFile([...group], resolve);
-        await fs.writeFile(
+        await p(writeFile)(
             `/Users/andrewlevine/bundlegento/${name}.js`,
-            'utf8',
             bundle,
         );
     }
@@ -80,7 +82,10 @@ async function generateBundleFile(
 
             const mod = parseModuleID(id);
             const path = resolver(mod.id);
-            let source = await fs.readFile(path, 'utf8');
+            let [err, source] = await wrapP(p(readFile)(path, 'utf8'));
+            if (err) {
+                throw new Error(`Failed reading module ${id} in ${path}`);
+            }
 
             if (mod.isText) {
                 source = wrapTextModule(mod.id, source);
@@ -96,6 +101,9 @@ async function generateBundleFile(
     return concatModules(new Map(results));
 }
 
+// We're making an (admittedly large) assumption here that Require's
+// ID resolving logic hasn't changed between versions used across
+// various Magento releases
 const requirejs = readFileSync(require.resolve('requirejs/require.js'), 'utf8');
 // Piggy back on RequireJS's resolver so we don't have to duplicate that logic.
 // Warning: Does not strip loaders i.e. "text!foo/bar"
@@ -112,7 +120,11 @@ function createResolver(requireConfig: RequireConfig, baseDir: string) {
 
     return (id: string) => {
         const parts = parse(id);
-        const rel: string = nameToUrl(join(parts.dir, parts.name), parts.ext);
+        const knownExt = parts.ext === '.js' || parts.ext === '.html';
+        const rel: string = nameToUrl(
+            join(parts.dir, knownExt ? parts.name : parts.base),
+            knownExt ? parts.ext : '.js',
+        );
         return join(baseDir, rel);
     };
 }

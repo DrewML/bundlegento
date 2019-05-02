@@ -12,6 +12,7 @@ import { Logger } from './logger';
 import fromEntries from 'fromentries';
 
 const preloadScript = readFileSync(require.resolve('./preload'), 'utf8');
+const IGNORE = new Set(['module', 'require', 'mixins', 'domReady!']);
 
 type Opts = { logger: Logger };
 export async function getModulesByGroups(config: Config, { logger }: Opts) {
@@ -74,7 +75,7 @@ async function getModulesForPage(browser: Browser, url: string) {
     const modules: string[] = await page.evaluate('require.__loaded__');
 
     await page.close();
-    return modules;
+    return modules.filter(m => !IGNORE.has(m));
 }
 
 async function getRequireConfig(browser: Browser, url: string) {

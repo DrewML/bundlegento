@@ -7,7 +7,9 @@ import { configLocator } from './configLocator';
 import { getModulesByGroups } from './scraper';
 import { computeBundles } from './computeBundles';
 import { createBundles } from './bundler';
-import { promises as fs } from 'fs';
+// TODO: Switch from promisify to fs promises when not experimental in node
+import { promisify as p } from 'util';
+import { writeFile } from 'fs';
 import { join } from 'path';
 import { serialize } from './serialize';
 import { Logger, defaultLogger } from './logger';
@@ -25,6 +27,6 @@ export async function runForProject({
     // based on the previously-fetched data
     const bundleSpec = computeBundles(groups, { logger });
 
-    await fs.writeFile(join(__dirname, '../output.txt'), serialize(bundleSpec));
+    await p(writeFile)(join(__dirname, '../output.txt'), serialize(bundleSpec));
     await createBundles({ config, bundleSpec, requireConfig, logger });
 }

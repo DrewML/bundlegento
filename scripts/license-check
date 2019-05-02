@@ -5,6 +5,7 @@
  * See COPYING.txt for license details.
  */
 
+// TODO: Switch from promisify to fs promises when not experimental in node
 const { promisify } = require('util');
 const glob = require('glob');
 const { readFile } = require('fs');

@@ -3,13 +3,15 @@
  * See COPYING.txt for license details.
  */
 
-import { promises as fs } from 'fs';
+import { copyFile } from 'fs';
+// TODO: Switch from promisify to fs promises when not experimental in node
+import { promisify as p } from 'util';
 import { join } from 'path';
 
 const sampleConfigPath = require.resolve('../samples/.bundlegentorc');
 
 export async function writeSampleConfig() {
     const dest = join(process.cwd(), '.bundlegentorc.yml');
-    await fs.copyFile(sampleConfigPath, dest);
+    await p(copyFile)(sampleConfigPath, dest);
     return dest;
 }

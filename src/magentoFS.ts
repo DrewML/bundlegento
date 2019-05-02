@@ -3,8 +3,10 @@
  * See COPYING.txt for license details.
  */
 
-import { promises as fs } from 'fs';
+import { access, readdir, readFile } from 'fs';
 import { isAbsolute, join } from 'path';
+// TODO: Switch from promisify to fs promises when not experimental in node
+import { promisify as p } from 'util';
 import { wrapP } from './wrapP';
 
 type Theme = {
@@ -14,7 +16,7 @@ type Theme = {
 export async function themeExists(staticFolderPath: string, theme: Theme) {
     const vendorsRoot = await getVendorsRoot(staticFolderPath);
     const themePath = join(vendorsRoot, theme.vendor, theme.name);
-    const [err] = await wrapP(fs.access(themePath));
+    const [err] = await wrapP(p(access)(themePath));
 
     return !err;
 }
@@ -22,7 +24,7 @@ export async function themeExists(staticFolderPath: string, theme: Theme) {
 export async function getAllLanguages(staticContentDir: string, theme: Theme) {
     const vendorsRoot = await getVendorsRoot(staticContentDir);
     const themeDir = join(vendorsRoot, theme.vendor, theme.name);
-    const themes = await fs.readdir(themeDir);
+    const themes = await p(readdir)(themeDir);
     // filter out any extra files/folders that aren't locales
     const reLang = /^[a-z]{2}(?:_[a-z]{2})?$/i;
     return themes.filter(t => reLang.test(t));
@@ -40,10 +42,10 @@ async function getVendorsRoot(staticContentDir: string) {
     // static asset signing is disabled
     const versionFilePath = join(staticDir, 'deployed_version.txt');
     const [, version] = await wrapP(
-        fs.readFile(versionFilePath, 'utf8').then(v => v.trim()),
+        p(readFile)(versionFilePath, 'utf8').then(v => v.trim()),
     );
     const [accessErr] = await wrapP(
-        fs.access(join(staticDir, version || 'CauseAnErrorOnPurpose')),
+        p(access)(join(staticDir, version || 'CauseAnErrorOnPurpose')),
     );
 
     return accessErr
