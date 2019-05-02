@@ -9,7 +9,7 @@ import { Logger } from './logger';
 
 type EntriesByGroup = Record<string, Set<string>>;
 
-type Group = {
+export type Group = {
     name: string;
     modules: Set<string>;
     sharedBundleNames: Set<string>;
@@ -50,9 +50,9 @@ export function computeBundles(
         }),
     );
 
-    const sharedGroups: Record<string, Set<string>> = {
-        all: new Set(),
-    };
+    const sharedGroups: Map<string, Set<string>> = new Map([
+        ['all', new Set()],
+    ]);
 
     for (const [dep, groups] of Object.entries(depsWithGroups)) {
         // If the dependency is only in one group, keep it in
@@ -67,9 +67,8 @@ export function computeBundles(
         if (groups.size === 2) {
             const [group1, group2] = groups;
             const key = `${group1}-${group2}-shared`;
-            const modules = (sharedGroups[key] =
-                sharedGroups[key] || new Set());
-
+            let modules = sharedGroups.get(key);
+            if (!modules) sharedGroups.set(key, (modules = new Set()));
             modules.add(dep);
             finalGroups.get(group1)!.sharedBundleNames.add(key);
             finalGroups.get(group2)!.sharedBundleNames.add(key);
@@ -77,7 +76,7 @@ export function computeBundles(
 
         // Move to the global shared file
         if (groups.size > 2) {
-            sharedGroups.all.add(dep);
+            sharedGroups.get('all')!.add(dep);
         }
     }
 

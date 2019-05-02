@@ -1,0 +1,52 @@
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+const { renameModule, wrapTextModule } = require('../bundleHelpers');
+
+test('renameModule names simple AMD module', () => {
+    const src = `
+        define([], function() {
+            return 1;
+        })
+    `;
+    const result = renameModule('foo', src);
+    expect(result).toMatchInlineSnapshot(`
+"
+        define('foo', [], function() {
+            return 1;
+        })
+    "
+`);
+});
+
+test('renameModule names one-liner AMD module', () => {
+    const src = `define([], function() { return 1; })`;
+    const result = renameModule('foo/bar', src);
+    expect(result).toMatchInlineSnapshot(
+        `"define('foo/bar', [], function() { return 1; })"`,
+    );
+});
+
+test('renameModule does not rename named modules', () => {
+    const src = `define('foo', [], () => {})`;
+    const result = renameModule('foo', src);
+    expect(result).toBe(undefined);
+});
+
+test('wrapTextModule properly escapes strings', () => {
+    const src = `
+        <div>
+            <span>Hello, world '"</span>
+        </div>
+    `;
+    const result = wrapTextModule('foo', src);
+    expect(result).toMatchInlineSnapshot(`
+"
+define('foo', function() {
+    return '\\\\n        <div>\\\\n            <span>Hello, world \\\\'\\"</span>\\\\n        </div>\\\\n    ';
+});
+"
+`);
+});

@@ -38,6 +38,7 @@
   "devDependencies": {
     "@types/chalk": "^2.2.0",
     "@types/cosmiconfig": "^5.0.3",
+    "@types/jsesc": "^0.4.29",
     "@types/meow": "^5.0.0",
     "@types/puppeteer": "^1.12.1",
     "finalhandler": "^1.1.1",
@@ -52,6 +53,7 @@
     "chalk": "^2.4.2",
     "cosmiconfig": "^5.1.0",
     "fromentries": "^1.1.0",
+    "jsesc": "^2.5.2",
     "meow": "^5.0.0",
     "puppeteer": "^1.12.2",
     "requirejs": "^2.3.6",

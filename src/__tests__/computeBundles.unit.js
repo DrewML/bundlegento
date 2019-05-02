@@ -21,19 +21,30 @@ test('Generates bundles matching diagram in docs directory', () => {
     const bundleSpec = computeBundles(entriesByGroup, {});
     expect(bundleSpec).toMatchInlineSnapshot(`
 Object {
-  "groups": Object {
-    "cart": Object {
+  "groups": Map {
+    "cms" => Object {
       "modules": Set {
-        "cart-api",
-        "shipping",
-        "fancyselect",
+        "carousel",
+        "calendar",
       },
-      "name": "cart",
+      "name": "cms",
       "sharedBundleNames": Set {
         "all",
+        "cms-category-shared",
       },
     },
-    "category": Object {
+    "product" => Object {
+      "modules": Set {
+        "swatches",
+        "addtocart",
+      },
+      "name": "product",
+      "sharedBundleNames": Set {
+        "all",
+        "product-category-shared",
+      },
+    },
+    "category" => Object {
       "modules": Set {
         "options",
         "grid",
@@ -45,38 +56,27 @@ Object {
         "product-category-shared",
       },
     },
-    "cms": Object {
+    "cart" => Object {
       "modules": Set {
-        "carousel",
-        "calendar",
+        "cart-api",
+        "shipping",
+        "fancyselect",
       },
-      "name": "cms",
+      "name": "cart",
       "sharedBundleNames": Set {
         "all",
-        "cms-category-shared",
-      },
-    },
-    "product": Object {
-      "modules": Set {
-        "swatches",
-        "addtocart",
-      },
-      "name": "product",
-      "sharedBundleNames": Set {
-        "all",
-        "product-category-shared",
       },
     },
   },
-  "sharedGroups": Object {
-    "all": Set {
+  "sharedGroups": Map {
+    "all" => Set {
       "jquery",
       "colorpicker",
     },
-    "cms-category-shared": Set {
+    "cms-category-shared" => Set {
       "tooltip",
     },
-    "product-category-shared": Set {
+    "product-category-shared" => Set {
       "magnifier",
     },
   },
