@@ -39,6 +39,7 @@ export async function createBundles(opts: Opts) {
         )}`,
     );
 
+    // TODO: Handle multi lang
     const firstLang = langs[0];
     const baseDir = join(
         staticFolderPath,
@@ -49,6 +50,7 @@ export async function createBundles(opts: Opts) {
     );
 
     const resolve = createResolver(opts.requireConfig, baseDir);
+    opts.logger.log(`Created RequireJS resolver with baseDir: ${baseDir}`);
 
     for (const [name, group] of groups) {
         const bundle = await generateBundleFile([...group.modules], resolve);
@@ -81,13 +83,17 @@ async function generateBundleFile(
             }
 
             const mod = parseModuleID(id);
+            // if mod.plugins has "domReady", we need
+            // to figure some shit out, because the module ID
+            // will be empty
+
             const path = resolver(mod.id);
             let [err, source] = await wrapP(p(readFile)(path, 'utf8'));
             if (err) {
                 throw new Error(`Failed reading module ${id} in ${path}`);
             }
 
-            if (mod.isText) {
+            if (mod.plugins.includes('text')) {
                 source = wrapTextModule(mod.id, source);
             } else {
                 source = renameModule(mod.id, source) || source;
@@ -106,10 +112,10 @@ async function generateBundleFile(
 // various Magento releases
 const requirejs = readFileSync(require.resolve('requirejs/require.js'), 'utf8');
 // Piggy back on RequireJS's resolver so we don't have to duplicate that logic.
-// Warning: Does not strip loaders i.e. "text!foo/bar"
+// Warning: Does not strip plugins i.e. "text!foo/bar"
 function createResolver(requireConfig: RequireConfig, baseDir: string) {
     const sandbox = {};
-    // RequireJS targeted at browsers, so it doesn't
+    // RequireJS is targeted at browsers, so it doesn't
     // have a CommonJS version, and just sets a global.
     // This is a quick hack to get what we need off that global
     vm.runInNewContext(requirejs, sandbox);
@@ -121,6 +127,8 @@ function createResolver(requireConfig: RequireConfig, baseDir: string) {
     return (id: string) => {
         const parts = parse(id);
         const knownExt = parts.ext === '.js' || parts.ext === '.html';
+        // Some of the crazyness below is to deal with module names
+        // that appear to include extensions, like jquery.mobile.custom
         const rel: string = nameToUrl(
             join(parts.dir, knownExt ? parts.name : parts.base),
             knownExt ? parts.ext : '.js',
@@ -133,7 +141,7 @@ function parseModuleID(id: string) {
     const parts = id.split('!');
     return {
         id: parts[parts.length - 1],
-        isText: parts.includes('text'),
+        plugins: parts.slice(0, parts.length - 1),
     };
 }
 

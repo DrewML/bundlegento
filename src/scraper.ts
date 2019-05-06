@@ -12,7 +12,11 @@ import { Logger } from './logger';
 import fromEntries from 'fromentries';
 
 const preloadScript = readFileSync(require.resolve('./preload'), 'utf8');
-const IGNORE = new Set(['module', 'require', 'mixins', 'domReady!']);
+const IGNORE = new Set([
+    'module', // not a real module, special case handled by RequireJS
+    'require', // not a real module, special case handled by RequireJS
+    'mixins', // included by Magento in separate file
+]);
 
 type Opts = { logger: Logger };
 export async function getModulesByGroups(config: Config, { logger }: Opts) {

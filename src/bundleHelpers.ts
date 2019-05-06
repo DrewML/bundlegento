@@ -8,11 +8,13 @@ import jsesc from 'jsesc';
 // TODO: SourceMap support. Can use Rich Harris' magic-string
 // https://github.com/Rich-Harris/magic-string
 // Note: It is intentional to not use a full ECMAScript parser here
-// for performance reasons (JS grammar is complex and slow to parse)
-// Also, yes, I wrote an API that returns either a string or a boolean 😌
+// for performance reasons (JS grammar is complex and slow to parse).
+// We can switch to an actual parser if we have to fix too many edge cases.
 export function renameModule(id: string, source: string): string | undefined {
-    const defineIdx = source.indexOf('define');
-    if (defineIdx === -1) return;
+    const match = /define\s*\(/.exec(source);
+    if (!match) return;
+
+    const defineIdx = match.index;
 
     let firstParenIdx = -1;
     let i = defineIdx + 'define'.length;

@@ -29,6 +29,35 @@ test('renameModule names one-liner AMD module', () => {
     );
 });
 
+test('renameModule handles modules without a deps array', () => {
+    const src = `define(function() {})`;
+    const result = renameModule('foo', src);
+    expect(result).toMatchInlineSnapshot(`"define('foo', function() {})"`);
+});
+
+test('renameModule does not break on lint comments referencing define', () => {
+    // Real world breakage in `requirejs/domReady.js` in Magento stores
+    const src = `
+    /*jslint */
+    /*global define: false */
+
+    define(function () {
+        return 1;
+    });
+    `;
+    const result = renameModule('foo', src);
+    expect(result).toMatchInlineSnapshot(`
+"
+    /*jslint */
+    /*global define: false */
+
+    define('foo', function () {
+        return 1;
+    });
+    "
+`);
+});
+
 test('renameModule does not rename named modules', () => {
     const src = `define('foo', [], () => {})`;
     const result = renameModule('foo', src);
