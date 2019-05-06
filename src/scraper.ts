@@ -79,7 +79,10 @@ async function getModulesForPage(browser: Browser, url: string) {
     const modules: string[] = await page.evaluate('require.__loaded__');
 
     await page.close();
-    return modules.filter(m => !IGNORE.has(m));
+    // TODO: More descriptive comment for ignores and domReady stuff
+    return modules
+        .filter(m => !IGNORE.has(m))
+        .map(m => (m === 'domReady!' ? 'domReady' : m));
 }
 
 async function getRequireConfig(browser: Browser, url: string) {

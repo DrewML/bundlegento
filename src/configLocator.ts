@@ -21,6 +21,7 @@ export type Config = {
         vendor: string;
     };
     staticFolderPath: string;
+    outDir: string;
     groups: Record<string, GroupConfig>;
 };
 

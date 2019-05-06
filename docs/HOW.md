@@ -47,6 +47,6 @@ In the diagram, a colored/faded module means that it has been relocated to one o
 
 The splitting completes when a `bundlegento`-specific mapping of modules to bundles has been created.
 
-### Conversion to RequireJS Optimizer Config
+### Concatenation
 
-TODO: Work is not done yet
+TODO

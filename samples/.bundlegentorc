@@ -6,6 +6,7 @@ theme:
     name: luma
     vendor: Magento
 staticFolderPath: /Users/andrewlevine/sites/perfing/pub/static
+outDir: /Users/andrewlevine/bundlegento/bundles
 groups:
     cms:
         urls:

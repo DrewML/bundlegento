@@ -10,7 +10,7 @@ import { Logger } from './logger';
 import { Config } from './configLocator';
 // TODO: Switch from promisify to fs promises when not experimental in node
 import { promisify as p } from 'util';
-import { readFileSync, readFile, writeFile } from 'fs';
+import { readFileSync, readFile, writeFile, mkdir } from 'fs';
 import { BundleSpec } from './computeBundles';
 import { renameModule, wrapTextModule } from './bundleHelpers';
 import { themeExists, getAllLanguages } from './magentoFS';
@@ -22,7 +22,7 @@ type Opts = {
     logger: Logger;
 };
 export async function createBundles(opts: Opts) {
-    const { theme, staticFolderPath } = opts.config;
+    const { theme, staticFolderPath, outDir } = opts.config;
     const { groups, sharedGroups } = opts.bundleSpec;
 
     const exists = await themeExists(staticFolderPath, theme);
@@ -52,20 +52,18 @@ export async function createBundles(opts: Opts) {
     const resolve = createResolver(opts.requireConfig, baseDir);
     opts.logger.log(`Created RequireJS resolver with baseDir: ${baseDir}`);
 
+    await p(mkdir)(outDir, { recursive: true });
+
     for (const [name, group] of groups) {
         const bundle = await generateBundleFile([...group.modules], resolve);
-        await p(writeFile)(
-            `/Users/andrewlevine/bundlegento/${name}.js`,
-            bundle,
-        );
+        const filePath = join(outDir, `${name}.js`);
+        await p(writeFile)(filePath, bundle);
     }
 
     for (const [name, group] of sharedGroups) {
         const bundle = await generateBundleFile([...group], resolve);
-        await p(writeFile)(
-            `/Users/andrewlevine/bundlegento/${name}.js`,
-            bundle,
-        );
+        const filePath = join(outDir, `${name}.js`);
+        await p(writeFile)(filePath, bundle);
     }
 
     console.log('Wrote bundles');
