@@ -64,6 +64,19 @@ test('renameModule does not rename named modules', () => {
     expect(result).toBe(undefined);
 });
 
+test('renameModule injects an empty define above a non-AMD module without a shim', () => {
+    const src = `console.log('not an AMD module')`;
+    const result = renameModule('foo', src);
+    expect(result).toMatchInlineSnapshot(`
+"define('foo', function() {
+    // bundlegento-injected stub for non-AMD module (no shim config was found for this module)
+});
+// Original code for non-AMD module foo
+console.log('not an AMD module')
+"
+`);
+});
+
 test('wrapTextModule properly escapes strings', () => {
     const src = `
         <div>

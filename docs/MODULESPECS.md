@@ -10,18 +10,18 @@ This module does not exist yet. If you're reading this document, though, you can
 1. Module must follow all Magento coding standards
 1. Module must be installable as a composer package
 1. Module must live in a separate repo from the `bundlegento` tool
-1. Must support Magento version 2.1.4 and up _minimum__
+1. Must support Magento version 2.1.4 and up \_minimum\_\_
 
 ## Implementation Details
 
- When `Magento_Bundlegento` is installed, its job is to determine which script tags (if any) should be injected into the `head` of the document during rendering.
+When `Magento_Bundlegento` is installed, its job is to determine which script tags (if any) should be injected into the `head` of the document during rendering.
 
- A store that has used `bundlegento` to generate optimized JavaScript will have a new `bundlegento` directory within each _bundled_ locale. As an example, if Luma was bundled within a default installation of Magento using only the `en_US` locale, all bundle data would be located in `pub/static/frontend/Magento/luma/en_US/bundlegento`.
+A store that has used `bundlegento` to generate optimized JavaScript will have a new `bundlegento` directory within each _bundled_ locale. As an example, if Luma was bundled within a default installation of Magento using only the `en_US` locale, all bundle data would be located in `pub/static/frontend/Magento/luma/en_US/bundlegento`.
 
- The `bundlegento` directory within a locale includes 2 different types of files:
+The `bundlegento` directory within a locale includes 2 different types of files:
 
-- Bundled JavaScript files
-- Bundlegento Manifest
+-   Bundled JavaScript files
+-   Bundlegento Manifest
 
 The _manifest_ is what should be used by `Magento_Bundlegento` to determine what (if any) bundle files to include. Below is an example of the structure and contents of a manifest:
 
@@ -37,7 +37,10 @@ The _manifest_ is what should be used by `Magento_Bundlegento` to determine what
             "excludeForLayoutHandles": []
         },
         "category_special": {
-            "includeForLayoutHandles": ["catalog_category_view", "catalog_shoes"],
+            "includeForLayoutHandles": [
+                "catalog_category_view",
+                "catalog_shoes"
+            ],
             "excludeForLayoutHandles": []
         },
         "category": {
@@ -56,12 +59,12 @@ The _manifest_ is what should be used by `Magento_Bundlegento` to determine what
 
 The `rules` are used to determine what group's JS files should be included. The following table illustrates how these rules work:
 
-| Handles On Page                      | Included JS                                     | 
-|--------------------------------------|-------------------------------------------------|  
-| cms_index_index                      | all.js                                          | 
-| catalog_product_view                 | all.js, category.js, product-category-shared.js | 
-| catalog_category_view, catalog_shoes | all.js, category-special.js                     | 
-| catalog_category_view                | all.js, category.js, product-category-shared.js | 
+| Handles On Page                      | Included JS                                     |
+| ------------------------------------ | ----------------------------------------------- |
+| cms_index_index                      | all.js                                          |
+| catalog_product_view                 | all.js, category.js, product-category-shared.js |
+| catalog_category_view, catalog_shoes | all.js, category-special.js                     |
+| catalog_category_view                | all.js, category.js, product-category-shared.js |
 
 ## Pseudo Code
 
@@ -74,7 +77,7 @@ const jsFiles = [];
 
 for (const [groupName, rules] of manifest.rules) {
     // Important Note: _Every_ value in `includeForLayoutHandles` MUST
-    // be present. If 10 handles are in includes, all 10 need to be on 
+    // be present. If 10 handles are in includes, all 10 need to be on
     // a page to make a match
     const allIncludesMatch = rules.includeForLayoutHandles.every(handle => {
         return loadedHandles.includes(handle);
@@ -103,5 +106,5 @@ In an unbundled store, script tags get added to the head in this order:
 
 When enabled, this module should:
 
-- Concatenate together `require.js` and `mixins.js`, serving them as a single file
-- Inject all JS bundles necessary for the page (as specified by manifest) directly _after_ the concatenated `requirejs+mixins.js`, but before `requirejs-config.js`
+-   Concatenate together `require.js` and `mixins.js`, serving them as a single file
+-   Inject all JS bundles necessary for the page (as specified by manifest) directly _after_ the concatenated `requirejs+mixins.js`, but before `requirejs-config.js`

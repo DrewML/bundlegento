@@ -12,7 +12,11 @@ import { Config } from './configLocator';
 import { promisify as p } from 'util';
 import { readFileSync, readFile, writeFile, mkdir } from 'fs';
 import { BundleSpec } from './computeBundles';
-import { renameModule, wrapTextModule } from './bundleHelpers';
+import {
+    renameModule,
+    wrapShimmedAMDModule,
+    wrapTextModule,
+} from './bundleHelpers';
 import { themeExists, getAllLanguages } from './magentoFS';
 
 type Opts = {
@@ -39,7 +43,8 @@ export async function createBundles(opts: Opts) {
         )}`,
     );
 
-    // TODO: Handle multi lang
+    // TODO: Do we actually need to handle multilang for JS?
+    // If so, should probably do it :)
     const firstLang = langs[0];
     const baseDir = join(
         staticFolderPath,
@@ -54,14 +59,24 @@ export async function createBundles(opts: Opts) {
 
     await p(mkdir)(outDir, { recursive: true });
 
+    // TODO: Unify groups/sharedGroups data structures
+    // so we don't have to special case
     for (const [name, group] of groups) {
-        const bundle = await generateBundleFile([...group.modules], resolve);
+        const bundle = await generateBundleFile(
+            [...group.modules],
+            resolve,
+            opts.requireConfig.shim,
+        );
         const filePath = join(outDir, `${name}.js`);
         await p(writeFile)(filePath, bundle);
     }
 
     for (const [name, group] of sharedGroups) {
-        const bundle = await generateBundleFile([...group], resolve);
+        const bundle = await generateBundleFile(
+            [...group],
+            resolve,
+            opts.requireConfig.shim,
+        );
         const filePath = join(outDir, `${name}.js`);
         await p(writeFile)(filePath, bundle);
     }
@@ -73,7 +88,9 @@ const cache = new Map<string, string>();
 async function generateBundleFile(
     modules: string[],
     resolver: ReturnType<typeof createResolver>,
+    shim: RequireShim = {},
 ) {
+    const shimmedModules = new Set(Object.keys(shim));
     const results = await Promise.all(
         modules.map(async id => {
             if (cache.has(id)) {
@@ -81,10 +98,6 @@ async function generateBundleFile(
             }
 
             const mod = parseModuleID(id);
-            // if mod.plugins has "domReady", we need
-            // to figure some shit out, because the module ID
-            // will be empty
-
             const path = resolver(mod.id);
             let [err, source] = await wrapP(p(readFile)(path, 'utf8'));
             if (err) {
@@ -94,7 +107,14 @@ async function generateBundleFile(
             if (mod.plugins.includes('text')) {
                 source = wrapTextModule(mod.id, source);
             } else {
-                source = renameModule(mod.id, source) || source;
+                source = shimmedModules.has(mod.id)
+                    ? wrapShimmedAMDModule(
+                          mod.id,
+                          source,
+                          // @ts-ignore
+                          shim[mod.id],
+                      )
+                    : renameModule(mod.id, source) || source;
             }
 
             cache.set(id, source);

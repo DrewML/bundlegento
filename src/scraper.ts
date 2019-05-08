@@ -79,12 +79,12 @@ async function getModulesForPage(browser: Browser, url: string) {
     const modules: string[] = await page.evaluate('require.__loaded__');
 
     await page.close();
-    // TODO: More descriptive comment for ignores and domReady stuff
-    return modules
-        .filter(m => !IGNORE.has(m))
-        .map(m => (m === 'domReady!' ? 'domReady' : m));
+    return modules.filter(m => !IGNORE.has(m));
 }
 
+// This makes a second request to a page that has already
+// been visited by `getModulesForPage`. But, the extra request
+// isn't expensive, and the body of that method stays cleaner
 async function getRequireConfig(browser: Browser, url: string) {
     const page = await browser.newPage();
     await page.goto(url, {
