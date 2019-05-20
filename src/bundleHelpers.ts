@@ -62,8 +62,8 @@ export function wrapShimmedAMDModule(
     source: string,
     shimConfig: RequireShim,
 ) {
-    // For some awful reason, luma (or blank) in core
-    // defines a shim for a module that's a valid AMD module
+    // For some reason, Magento core defines a shim
+    // for a module that's a already an AMD module
     if (RE_DEFINE.test(source)) return renameModule(id, source);
 
     const deps = shimConfig.deps || [];
@@ -79,7 +79,7 @@ export function wrapShimmedAMDModule(
 export function wrapTextModule(id: string, source: string) {
     const escaped = jsesc(source);
     return `
-define('${id}', function() {
+define('text!${id}', function() {
     return '${escaped}';
 });
 `;

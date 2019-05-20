@@ -1,11 +1,11 @@
 ---
 configVersion: '1.0'
 headless: true
-storeRootURL: https://perfing.test
+storeRootURL: https://demo.test
 theme:
     name: luma
     vendor: Magento
-staticFolderPath: /Users/andrewlevine/sites/perfing/pub/static
+staticFolderPath: /Users/andrewlevine/sites/demo/pub/static
 outDir: /Users/andrewlevine/bundlegento/bundles
 groups:
     cms:

@@ -4,57 +4,41 @@
  */
 
 import { mergeSets } from './mergeSets';
-import fromEntries from 'fromentries';
 import { Logger } from './logger';
 
-type EntriesByGroup = Record<string, Set<string>>;
+type EntriesByGroup = Map<string, Set<string>>;
 
 export type Group = {
     name: string;
     modules: Set<string>;
-    sharedBundleNames: Set<string>;
-};
-
-export type BundleSpec = {
-    groups: Map<string, Group>;
-    sharedGroups: Map<string, Set<string>>;
+    dependsOnGroups: Set<string>;
 };
 
 type Opts = { logger?: Logger };
-export function computeBundles(
-    entriesByGroup: EntriesByGroup,
-    opts: Opts,
-): BundleSpec {
-    const allDeps = Array.from(mergeSets(Object.values(entriesByGroup)));
-    const depsWithGroups = fromEntries(
-        allDeps.map(dep => {
-            const pair: [string, Set<string>] = [dep, new Set()];
-            return pair;
-        }),
+export function computeBundles(entriesByGroup: EntriesByGroup, opts: Opts) {
+    const allDeps: string[] = Array.from(
+        mergeSets([...entriesByGroup.values()]),
+    );
+    // Generate and populate Map with empty sets eagerly to
+    // avoid safety checks everywhere in later code
+    const depsWithGroups = new Map(
+        allDeps.map(dep => [dep, new Set()] as [string, Set<string>]),
     );
 
-    for (const [group, deps] of Object.entries(entriesByGroup)) {
+    for (const [group, deps] of entriesByGroup) {
         for (const dep of deps) {
-            depsWithGroups[dep].add(group);
+            depsWithGroups.get(dep)!.add(group);
         }
     }
 
     const finalGroups = new Map(
-        Object.keys(entriesByGroup).map(name => {
-            const conf = {
-                name,
-                modules: new Set(),
-                sharedBundleNames: new Set(['all']),
-            };
-            return [name, conf] as [string, Group];
+        [...entriesByGroup.keys()].map(name => {
+            return [name, conf(name)] as [string, Group];
         }),
-    );
+        // Special-case the "all" group
+    ).set('all', conf('all'));
 
-    const sharedGroups: Map<string, Set<string>> = new Map([
-        ['all', new Set()],
-    ]);
-
-    for (const [dep, groups] of Object.entries(depsWithGroups)) {
+    for (const [dep, groups] of depsWithGroups) {
         // If the dependency is only in one group, keep it in
         // that group
         if (groups.size === 1) {
@@ -67,18 +51,25 @@ export function computeBundles(
         if (groups.size === 2) {
             const [group1, group2] = groups;
             const key = `${group1}-${group2}-shared`;
-            let modules = sharedGroups.get(key);
-            if (!modules) sharedGroups.set(key, (modules = new Set()));
-            modules.add(dep);
-            finalGroups.get(group1)!.sharedBundleNames.add(key);
-            finalGroups.get(group2)!.sharedBundleNames.add(key);
+            if (!finalGroups.get(key)) {
+                finalGroups.set(key, conf(key));
+            }
+            finalGroups.get(key)!.modules.add(dep);
+            finalGroups.get(group1)!.dependsOnGroups.add(key);
+            finalGroups.get(group2)!.dependsOnGroups.add(key);
         }
 
         // Move to the global shared file
         if (groups.size > 2) {
-            sharedGroups.get('all')!.add(dep);
+            finalGroups.get('all')!.modules.add(dep);
         }
     }
 
-    return { groups: finalGroups, sharedGroups };
+    return finalGroups;
 }
+
+const conf = (name: string): Group => ({
+    name,
+    modules: new Set(),
+    dependsOnGroups: new Set(['all']),
+});

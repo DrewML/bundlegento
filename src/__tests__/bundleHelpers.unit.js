@@ -86,7 +86,7 @@ test('wrapTextModule properly escapes strings', () => {
     const result = wrapTextModule('foo', src);
     expect(result).toMatchInlineSnapshot(`
 "
-define('foo', function() {
+define('text!foo', function() {
     return '\\\\n        <div>\\\\n            <span>Hello, world \\\\'\\"</span>\\\\n        </div>\\\\n    ';
 });
 "

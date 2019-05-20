@@ -9,7 +9,6 @@ import { Config } from './configLocator';
 import { URL } from 'url';
 import { flatten } from './flatten';
 import { Logger } from './logger';
-import fromEntries from 'fromentries';
 
 const preloadScript = readFileSync(require.resolve('./preload'), 'utf8');
 const IGNORE = new Set([
@@ -20,14 +19,10 @@ const IGNORE = new Set([
 
 type Opts = { logger: Logger };
 export async function getModulesByGroups(config: Config, { logger }: Opts) {
-    const groups = fromEntries(
-        Object.keys(config.groups).map(key => {
-            const pair = [key, new Set() as Set<string>] as [
-                string,
-                Set<string>
-            ];
-            return pair;
-        }),
+    const groups = new Map(
+        Object.keys(config.groups).map(
+            key => [key, new Set<string>()] as [string, Set<string>],
+        ),
     );
 
     const browser = await puppeteer.launch({ headless: config.headless });
@@ -37,7 +32,7 @@ export async function getModulesByGroups(config: Config, { logger }: Opts) {
         new URL(firstURL, config.storeRootURL).toString(),
     );
 
-    for (const [group, modules] of Object.entries(groups)) {
+    for (const [group, modules] of groups) {
         logger.log(`Fetching modules for group ${group}`);
         const { urls } = config.groups[group];
         const modulesInUse = await getModulesForPages(

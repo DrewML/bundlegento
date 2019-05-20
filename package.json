@@ -54,6 +54,7 @@
     "cosmiconfig": "^5.1.0",
     "fromentries": "^1.1.0",
     "jsesc": "^2.5.2",
+    "magic-string": "^0.25.2",
     "meow": "^5.0.0",
     "puppeteer": "^1.12.2",
     "requirejs": "^2.3.6",
