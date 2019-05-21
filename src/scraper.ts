@@ -68,7 +68,7 @@ async function getModulesForPage(browser: Browser, url: string) {
     await page.evaluateOnNewDocument(preloadScript);
 
     await page.goto(url, {
-        waitUntil: ['load', 'networkidle0'],
+        waitUntil: ['networkidle0', 'load'],
     });
 
     const modules: string[] = await page.evaluate('require.__loaded__');

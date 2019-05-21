@@ -4,6 +4,8 @@ import MagicString, { Bundle } from 'magic-string';
 // Tip: Can verify source-mappings are working correctly
 // using http://evanw.github.io/source-map-visualization/
 
+const RE_DEFINE = /define\s*\(/;
+
 export function wrapTextModule(id: string, source: string) {
     const [before, after] = `define('text!${id}', function() {
     return 'SPLIT';
@@ -13,7 +15,6 @@ export function wrapTextModule(id: string, source: string) {
     const str = new MagicString(source);
     const startPiece = escaped.slice(0, source.length);
 
-    // Have I mentioned I hate working with source-maps?
     return str
         .overwrite(0, source.length, startPiece)
         .append(escaped.slice(source.length))
@@ -21,12 +22,11 @@ export function wrapTextModule(id: string, source: string) {
         .prepend(before);
 }
 
-const RE_DEFINE = /define\s*\(/;
 export function isAMDWithDefine(source: string) {
     return RE_DEFINE.test(source);
 }
 
-const RE_NAMED_AMD = /define\s*\(['"]/;
+const RE_NAMED_AMD = /define\s*\(\s*['"]/;
 export function isNamedAMD(source: string) {
     const match = RE_NAMED_AMD.exec(source);
     return !!match;
@@ -62,4 +62,16 @@ export function wrapShimmedModule(
     });`.split('SPLIT');
 
     return new MagicString(source).prepend(before).append(after);
+}
+
+export function renameModule(id: string, source: string) {
+    const str = new MagicString(source);
+    const { 0: match, index } = source.match(RE_DEFINE) || [];
+    if (typeof index !== 'number') {
+        throw new Error(
+            'Failed RE_DEFINE RegExp. Should have used a real parser',
+        );
+    }
+
+    return str.prependRight(index + match.length, `'${id}', `);
 }

@@ -3,38 +3,20 @@ const {
     isAMDWithDefine,
     wrapNonShimmedModule,
     wrapShimmedModule,
+    renameModule,
+    isNamedAMD,
 } = require('../transformation');
 
-test('wrapTextModule transforms HTML to module w/ escaping and sourcemaps', () => {
+test('wrapTextModule transforms HTML to module w/ escaping', () => {
     const result = wrapTextModule('bar', `<span>Hello World ''"</span>`);
     expect(result.toString()).toMatchInlineSnapshot(`
 "define('text!bar', function() {
     return '<span>Hello World \\\\'\\\\'\\"</span>';
 });"
 `);
-    expect(
-        result.generateMap({
-            source: 'bar.html',
-            file: 'bar.html',
-            includeContent: true,
-        }),
-    ).toMatchInlineSnapshot(`
-SourceMap {
-  "file": "bar.html",
-  "mappings": ";YAAA",
-  "names": Array [],
-  "sources": Array [
-    "bar.html",
-  ],
-  "sourcesContent": Array [
-    "<span>Hello World ''\\"</span>",
-  ],
-  "version": 3,
-}
-`);
 });
 
-test('wrapNonShimmedModule wraps module w/ sourcemaps', () => {
+test('wrapNonShimmedModule wraps module', () => {
     const result = wrapNonShimmedModule('bar', 'console.log("Hello World");');
     expect(result.toString()).toMatchInlineSnapshot(`
 "define('bar', function() {
@@ -43,29 +25,9 @@ test('wrapNonShimmedModule wraps module w/ sourcemaps', () => {
 // Original code for non-AMD module bar
 console.log(\\"Hello World\\");"
 `);
-    expect(
-        result.generateMap({
-            source: 'bar.js',
-            file: 'bar.js',
-            includeContent: true,
-        }),
-    ).toMatchInlineSnapshot(`
-SourceMap {
-  "file": "bar.js",
-  "mappings": ";;;;AAAA",
-  "names": Array [],
-  "sources": Array [
-    "bar.js",
-  ],
-  "sourcesContent": Array [
-    "console.log(\\"Hello World\\");",
-  ],
-  "version": 3,
-}
-`);
 });
 
-test('wrapShimmedModule injects body into define body with deps + sourcemaps', () => {
+test('wrapShimmedModule injects non-AMD module into define body with deps', () => {
     const result = wrapShimmedModule('bar', 'log("hello world");', {
         deps: ['log'],
     });
@@ -78,26 +40,34 @@ test('wrapShimmedModule injects body into define body with deps + sourcemaps', (
         return window['undefined'];
     });"
 `);
-    expect(
-        result.generateMap({
-            source: 'bar.js',
-            file: 'bar.js',
-            includeContent: true,
-        }),
-    ).toMatchInlineSnapshot(`
-SourceMap {
-  "file": "bar.js",
-  "mappings": ";;;YAAA",
-  "names": Array [],
-  "sources": Array [
-    "bar.js",
-  ],
-  "sourcesContent": Array [
-    "log(\\"hello world\\");",
-  ],
-  "version": 3,
-}
-`);
+});
+
+test('renameModule renames anonymous AMD module with empty deps', () => {
+    const result = renameModule('bar', 'define([], function() {});');
+    expect(result.toString()).toMatchInlineSnapshot(
+        `"define('bar', [], function() {});"`,
+    );
+});
+
+test('renameModule renames anonymous AMD module with deps', () => {
+    const result = renameModule('bar', `define(['foo'], function(foo) {});`);
+    expect(result.toString()).toMatchInlineSnapshot(
+        `"define('bar', ['foo'], function(foo) {});"`,
+    );
+});
+
+test('renameModule renames anonymous AMD module with missing deps', () => {
+    const result = renameModule('bar', `define(function() {});`);
+    expect(result.toString()).toMatchInlineSnapshot(
+        `"define('bar', function() {});"`,
+    );
+});
+
+test('renameModule renames anonymous AMD module with space before invocation', () => {
+    const result = renameModule('bar', `define  (function() {});`);
+    expect(result.toString()).toMatchInlineSnapshot(
+        `"define  ('bar', function() {});"`,
+    );
 });
 
 test('isAMDWithDefine is true for module with define', () => {
@@ -120,4 +90,13 @@ test('isAMDWithDefine is true for module with define and some deps', () => {
 
 test('isAMDWithDefine is false for module without define', () => {
     expect(isAMDWithDefine('console.log("heh");')).toBe(false);
+});
+
+test('isNamedAMD is true for named amd', () => {
+    expect(isNamedAMD('define("foo", function() {});')).toBe(true);
+});
+
+test('isNamedAMD is true for named amd with padding inside parens', () => {
+    // Protects against the weird formatting in jQuery
+    expect(isNamedAMD('define( "jQuery", function() {});')).toBe(true);
 });

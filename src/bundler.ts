@@ -18,6 +18,7 @@ import {
     isAMDWithDefine,
     isNamedAMD,
     wrapShimmedModule as wrapShimmedModuleTemp,
+    renameModule as renameModuleTemp,
 } from './transformation';
 import MagicString, { Bundle as MagicBundle } from 'magic-string';
 
@@ -69,6 +70,7 @@ export async function createBundles(opts: Opts) {
             bundle.generateMap({
                 file: `${name}.js`,
                 includeContent: true,
+                hires: true,
             }),
         );
     }
@@ -164,33 +166,9 @@ const RE_DEFINE = /define\s*\(/;
 export function renameModule(id: string, source: string): string | undefined {
     const match = RE_DEFINE.exec(source);
     if (!match) return wrapNonShimmedModule(id, source).toString();
+    if (isNamedAMD(source)) return;
 
-    const defineIdx = match.index;
-
-    let firstParenIdx = -1;
-    let i = defineIdx + 'define'.length;
-
-    while (true) {
-        if (source[i] === '(') {
-            firstParenIdx = i;
-            const [, next = ''] = source.slice(i + 1).match(/\s*(.)/) || [];
-            // Named module, bail
-            if (/['"`]/.test(next)) return;
-            break;
-        }
-
-        if (source[i] === ' ') {
-            i++;
-            continue;
-        }
-
-        return;
-    }
-
-    const strStart = source.slice(0, firstParenIdx + 1);
-    const strEnd = source.slice(firstParenIdx + 1);
-
-    return `${strStart}'${id}', ${strEnd}`;
+    return renameModuleTemp(id, source).toString();
 }
 
 export function wrapShimmedModule(
@@ -199,7 +177,7 @@ export function wrapShimmedModule(
     shimConfig: RequireShim,
 ) {
     // For some reason, Magento core defines a shim
-    // for a module that's a already an AMD module
+    // for a module that's already an AMD module
     return isAMDWithDefine(source)
         ? renameModule(id, source)
         : wrapShimmedModuleTemp(id, source, shimConfig);
