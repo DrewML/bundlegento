@@ -2,13 +2,16 @@ import vm from 'vm';
 import { readFileSync } from 'fs';
 import { parse, join } from 'path';
 
+// The whole point of this module is to piggy back on
+// RequireJS's path resolver, so we don't have to reimplement
+// it. Unfortunately the lib is not CommonJS or ES module friendly,
+// so we have to use some hacks.
+
 // We're making an (admittedly large) assumption here that Require's
 // ID resolving logic hasn't changed between versions used across
 // various Magento releases
 const requirejs = readFileSync(require.resolve('requirejs/require.js'), 'utf8');
 
-// Piggy back on RequireJS's resolver so we don't have to duplicate that logic.
-// Warning: Does not strip plugins i.e. "text!foo/bar"
 export type Resolver = (id: string) => string;
 // Haven't profiled yet to see how expensive the vm module is,
 // but doing cheap caching for now just in case. Cache key is
