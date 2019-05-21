@@ -1,15 +1,15 @@
 const {
     wrapTextModule,
     isAMDWithDefine,
-    wrapNonShimmedAMDModule,
-    wrapShimmedAMDModule,
+    wrapNonShimmedModule,
+    wrapShimmedModule,
 } = require('../transformation');
 
 test('wrapTextModule transforms HTML to module w/ escaping and sourcemaps', () => {
-    const result = wrapTextModule('bar', `<span>Hello World ' """"</span>`);
+    const result = wrapTextModule('bar', `<span>Hello World ''"</span>`);
     expect(result.toString()).toMatchInlineSnapshot(`
 "define('text!bar', function() {
-    return '<span>Hello World \\\\' \\"\\"\\"\\"</span>';
+    return '<span>Hello World \\\\'\\\\'\\"</span>';
 });"
 `);
     expect(
@@ -27,18 +27,15 @@ SourceMap {
     "bar.html",
   ],
   "sourcesContent": Array [
-    "<span>Hello World ' \\"\\"\\"\\"</span>",
+    "<span>Hello World ''\\"</span>",
   ],
   "version": 3,
 }
 `);
 });
 
-test('wrapNonShimmedAMDModule wraps module w/ sourcemaps', () => {
-    const result = wrapNonShimmedAMDModule(
-        'bar',
-        'console.log("Hello World");',
-    );
+test('wrapNonShimmedModule wraps module w/ sourcemaps', () => {
+    const result = wrapNonShimmedModule('bar', 'console.log("Hello World");');
     expect(result.toString()).toMatchInlineSnapshot(`
 "define('bar', function() {
     // bundlegento-injected stub for non-AMD module (no shim config was found for this module)
@@ -68,8 +65,8 @@ SourceMap {
 `);
 });
 
-test('wrapShimmedAMDModule injects body into define body with deps + sourcemaps', () => {
-    const result = wrapShimmedAMDModule('bar', 'log("hello world");', {
+test('wrapShimmedModule injects body into define body with deps + sourcemaps', () => {
+    const result = wrapShimmedModule('bar', 'log("hello world");', {
         deps: ['log'],
     });
     expect(result.toString()).toMatchInlineSnapshot(`

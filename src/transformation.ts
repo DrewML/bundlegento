@@ -11,12 +11,12 @@ export function wrapTextModule(id: string, source: string) {
 
     const escaped = jsesc(source);
     const str = new MagicString(source);
-    const startPiece = escaped.slice(0, escaped.length);
+    const startPiece = escaped.slice(0, source.length);
 
     // Have I mentioned I hate working with source-maps?
     return str
         .overwrite(0, source.length, startPiece)
-        .append(escaped.slice(source.length + 1))
+        .append(escaped.slice(source.length))
         .append(after)
         .prepend(before);
 }
@@ -26,12 +26,18 @@ export function isAMDWithDefine(source: string) {
     return RE_DEFINE.test(source);
 }
 
+const RE_NAMED_AMD = /define\s*\(['"]/;
+export function isNamedAMD(source: string) {
+    const match = RE_NAMED_AMD.exec(source);
+    return !!match;
+}
+
 // Non-AMD modules typically expect that they're running
 // in the top-most lexical scope. We inject a separate `define`
 // to prevent the runtime RequireJS lib from fetching
 // a module it thinks hasn't been loaded, but we keep
 // the module code itself in the top-most scope
-export function wrapNonShimmedAMDModule(id: string, source: string) {
+export function wrapNonShimmedModule(id: string, source: string) {
     const str = new MagicString(source);
     return str.prepend(`define('${id}', function() {
     // bundlegento-injected stub for non-AMD module (no shim config was found for this module)
@@ -39,7 +45,7 @@ export function wrapNonShimmedAMDModule(id: string, source: string) {
 // Original code for non-AMD module ${id}\n`);
 }
 
-export function wrapShimmedAMDModule(
+export function wrapShimmedModule(
     id: string,
     source: string,
     shimConfig: RequireShim,

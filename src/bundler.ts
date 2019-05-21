@@ -12,7 +12,13 @@ import { readFile, writeFile, mkdir } from 'fs';
 import { computeBundles } from './computeBundles';
 import { getAllLanguages } from './magentoFS';
 import { createResolver, Resolver } from './resolver';
-import { wrapTextModule, wrapNonShimmedAMDModule } from './transformation';
+import {
+    wrapTextModule,
+    wrapNonShimmedModule,
+    isAMDWithDefine,
+    isNamedAMD,
+    wrapShimmedModule as wrapShimmedModuleTemp,
+} from './transformation';
 import MagicString, { Bundle as MagicBundle } from 'magic-string';
 
 type Opts = {
@@ -115,7 +121,7 @@ async function generateBundleFile(
             // TODO: detect then transform, rather than all the transformation
             // functions relying on each other
             source = shimmedModules.has(id)
-                ? wrapShimmedAMDModule(
+                ? wrapShimmedModule(
                       id,
                       source,
                       // @ts-ignore
@@ -148,7 +154,7 @@ function concatModules(modules: Map<string, string>) {
     for (const [id, source] of modules) {
         bundle.addSource({
             filename: `../${id}.js`,
-            content: new MagicString(source),
+            content: new MagicString(source.toString()),
         });
     }
     return bundle;
@@ -157,7 +163,7 @@ function concatModules(modules: Map<string, string>) {
 const RE_DEFINE = /define\s*\(/;
 export function renameModule(id: string, source: string): string | undefined {
     const match = RE_DEFINE.exec(source);
-    if (!match) return wrapNonShimmedAMDModule(id, source).toString();
+    if (!match) return wrapNonShimmedModule(id, source).toString();
 
     const defineIdx = match.index;
 
@@ -187,21 +193,14 @@ export function renameModule(id: string, source: string): string | undefined {
     return `${strStart}'${id}', ${strEnd}`;
 }
 
-export function wrapShimmedAMDModule(
+export function wrapShimmedModule(
     id: string,
     source: string,
     shimConfig: RequireShim,
 ) {
     // For some reason, Magento core defines a shim
     // for a module that's a already an AMD module
-    if (RE_DEFINE.test(source)) return renameModule(id, source);
-
-    const deps = shimConfig.deps || [];
-    return `define('${id}', ${JSON.stringify(deps)}, function() {
-        // Shimmed by bundlegento
-        (function() {
-            ${source};
-        })();
-        return window['${shimConfig.exports}'];
-    });`;
+    return isAMDWithDefine(source)
+        ? renameModule(id, source)
+        : wrapShimmedModuleTemp(id, source, shimConfig);
 }
