@@ -13,6 +13,7 @@ import { writeFile } from 'fs';
 import { join } from 'path';
 import { serialize } from './serialize';
 import { Logger, defaultLogger } from './logger';
+import { themeExists } from './magentoFS';
 
 type Opts = { configPath?: string; logger?: Logger };
 export async function runForProject({
@@ -20,6 +21,14 @@ export async function runForProject({
     logger = defaultLogger,
 }: Opts) {
     const config = await configLocator({ configPath, logger });
+    const exists = await themeExists(config.staticFolderPath, config.theme);
+    if (!exists) {
+        throw new Error(
+            `Could not find theme "${config.theme.vendor}/${
+                config.theme.name
+            }"`,
+        );
+    }
     const { groups, requireConfig } = await getModulesByGroups(config, {
         logger,
     });

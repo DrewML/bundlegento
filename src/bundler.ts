@@ -3,21 +3,16 @@
  * See COPYING.txt for license details.
  */
 
-import vm from 'vm';
-import { wrapP } from './wrapP';
-import { join, parse } from 'path';
+import { join } from 'path';
 import { Logger } from './logger';
 import { Config } from './configLocator';
 // TODO: Switch from promisify to fs promises when not experimental in node
 import { promisify as p } from 'util';
-import { readFileSync, readFile, writeFile, mkdir } from 'fs';
+import { readFile, writeFile, mkdir } from 'fs';
 import { computeBundles } from './computeBundles';
-import {
-    renameModule,
-    wrapShimmedAMDModule,
-    wrapTextModule,
-} from './bundleHelpers';
-import { themeExists, getAllLanguages } from './magentoFS';
+import { getAllLanguages } from './magentoFS';
+import { createResolver, Resolver } from './resolver';
+import { wrapTextModule, wrapNonShimmedAMDModule } from './transformation';
 import MagicString, { Bundle as MagicBundle } from 'magic-string';
 
 type Opts = {
@@ -29,13 +24,6 @@ type Opts = {
 export async function createBundles(opts: Opts) {
     const { theme, staticFolderPath, outDir } = opts.config;
     const { bundleSpec } = opts;
-
-    const exists = await themeExists(staticFolderPath, theme);
-    if (!exists) {
-        // TODO: Should check this _wayyy_ earlier in the app lifecycle
-        // before ever fetching data from the store
-        throw new Error(`Could not locate theme "${theme.name}"`);
-    }
 
     const langs = await getAllLanguages(staticFolderPath, theme);
     opts.logger.log(
@@ -82,75 +70,66 @@ export async function createBundles(opts: Opts) {
     console.log('Wrote bundles');
 }
 
+type ModuleDetails = {
+    source: string;
+    id: string;
+    plugins: string[];
+};
+const moduleDetailsCache = new Map<string, ModuleDetails>();
+async function getModuleDetails(id: string, resolver: Resolver) {
+    if (moduleDetailsCache.has(id)) {
+        return moduleDetailsCache.get(id) as ModuleDetails;
+    }
+
+    const mod = parseModuleID(id);
+    const path = resolver(mod.id);
+    try {
+        const source = await p(readFile)(path, 'utf8');
+        const result = { source, ...mod };
+        moduleDetailsCache.set(id, result);
+        return result;
+    } catch (err) {
+        err.message = `Failed reading module "${id}" in ${path}`;
+        throw err;
+    }
+}
+
 const cache = new Map<string, string>();
 async function generateBundleFile(
     modules: string[],
-    resolver: ReturnType<typeof createResolver>,
+    resolver: Resolver,
     shim: RequireShim = {},
 ) {
     const shimmedModules = new Set(Object.keys(shim));
-    const results = await Promise.all(
-        modules.map(async id => {
-            if (cache.has(id)) {
-                return [id, cache.get(id) as string] as [string, string];
-            }
+    const pendingModules = modules.map(async rawID => {
+        if (cache.has(rawID)) {
+            return [rawID, cache.get(rawID) as string] as [string, string];
+        }
 
-            const mod = parseModuleID(id);
-            const path = resolver(mod.id);
-            let [err, source] = await wrapP(p(readFile)(path, 'utf8'));
-            if (err) {
-                throw new Error(`Failed reading module ${id} in ${path}`);
-            }
+        let { source, id, plugins } = await getModuleDetails(rawID, resolver);
 
-            if (mod.plugins.includes('text')) {
-                source = wrapTextModule(mod.id, source);
-            } else {
-                source = shimmedModules.has(mod.id)
-                    ? wrapShimmedAMDModule(
-                          mod.id,
-                          source,
-                          // @ts-ignore
-                          shim[mod.id],
-                      )
-                    : renameModule(mod.id, source) || source;
-            }
+        if (plugins.includes('text')) {
+            // TODO: Don't toString, properly handle sourcemap
+            source = wrapTextModule(id, source).toString();
+        } else {
+            // TODO: detect then transform, rather than all the transformation
+            // functions relying on each other
+            source = shimmedModules.has(id)
+                ? wrapShimmedAMDModule(
+                      id,
+                      source,
+                      // @ts-ignore
+                      shim[id],
+                  )
+                : renameModule(id, source) || source;
+        }
 
-            cache.set(id, source);
-            return [id, source] as [string, string];
-        }),
-    );
+        cache.set(rawID, source);
+        return [rawID, source] as [string, string];
+    });
+    const results = await Promise.all(pendingModules);
 
     return concatModules(new Map(results));
-}
-
-// We're making an (admittedly large) assumption here that Require's
-// ID resolving logic hasn't changed between versions used across
-// various Magento releases
-const requirejs = readFileSync(require.resolve('requirejs/require.js'), 'utf8');
-// Piggy back on RequireJS's resolver so we don't have to duplicate that logic.
-// Warning: Does not strip plugins i.e. "text!foo/bar"
-function createResolver(requireConfig: RequireConfig, baseDir: string) {
-    const sandbox = {};
-    // RequireJS is targeted at browsers, so it doesn't
-    // have a CommonJS version, and just sets a global.
-    // This is a quick hack to get what we need off that global
-    vm.runInNewContext(requirejs, sandbox);
-    // @ts-ignore
-    sandbox.require.config({ ...requireConfig, baseUrl: '' });
-    // @ts-ignore
-    const nameToUrl = sandbox.require.s.contexts._.nameToUrl;
-
-    return (id: string) => {
-        const parts = parse(id);
-        const knownExt = parts.ext === '.js' || parts.ext === '.html';
-        // Some of the crazyness below is to deal with module names
-        // that appear to include extensions, like jquery.mobile.custom
-        const rel: string = nameToUrl(
-            join(parts.dir, knownExt ? parts.name : parts.base),
-            knownExt ? parts.ext : '.js',
-        );
-        return join(baseDir, rel);
-    };
 }
 
 function parseModuleID(id: string) {
@@ -173,4 +152,56 @@ function concatModules(modules: Map<string, string>) {
         });
     }
     return bundle;
+}
+
+const RE_DEFINE = /define\s*\(/;
+export function renameModule(id: string, source: string): string | undefined {
+    const match = RE_DEFINE.exec(source);
+    if (!match) return wrapNonShimmedAMDModule(id, source).toString();
+
+    const defineIdx = match.index;
+
+    let firstParenIdx = -1;
+    let i = defineIdx + 'define'.length;
+
+    while (true) {
+        if (source[i] === '(') {
+            firstParenIdx = i;
+            const [, next = ''] = source.slice(i + 1).match(/\s*(.)/) || [];
+            // Named module, bail
+            if (/['"`]/.test(next)) return;
+            break;
+        }
+
+        if (source[i] === ' ') {
+            i++;
+            continue;
+        }
+
+        return;
+    }
+
+    const strStart = source.slice(0, firstParenIdx + 1);
+    const strEnd = source.slice(firstParenIdx + 1);
+
+    return `${strStart}'${id}', ${strEnd}`;
+}
+
+export function wrapShimmedAMDModule(
+    id: string,
+    source: string,
+    shimConfig: RequireShim,
+) {
+    // For some reason, Magento core defines a shim
+    // for a module that's a already an AMD module
+    if (RE_DEFINE.test(source)) return renameModule(id, source);
+
+    const deps = shimConfig.deps || [];
+    return `define('${id}', ${JSON.stringify(deps)}, function() {
+        // Shimmed by bundlegento
+        (function() {
+            ${source};
+        })();
+        return window['${shimConfig.exports}'];
+    });`;
 }
