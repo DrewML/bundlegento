@@ -48,9 +48,11 @@ export function wrapNonShimmedModule(id: string, source: string) {
 export function wrapShimmedModule(
     id: string,
     source: string,
-    shimConfig: RequireShim,
+    shimConfig: { [key: string]: RequireShim | string[] },
 ) {
-    const deps = shimConfig.deps || [];
+    const shim = shimConfig[id];
+    const deps = Array.isArray(shim) ? shim : shim.deps || [];
+    const exports = Array.isArray(shim) ? undefined : shim.exports;
     const [before, after] = `define('${id}', ${JSON.stringify(
         deps,
     )}, function() {
@@ -58,7 +60,7 @@ export function wrapShimmedModule(
         (function() {
             SPLIT;
         })();
-        return window['${shimConfig.exports}'];
+        return window['${exports}'];
     });`.split('SPLIT');
 
     return new MagicString(source).prepend(before).append(after);

@@ -106,7 +106,7 @@ const cache = new Map<string, MagicString>();
 async function generateBundleFile(
     modules: string[],
     resolver: Resolver,
-    shim: RequireShim = {},
+    shim:{ [key: string]: RequireShim | string[] } = {},
 ) {
     const shimmedModules = new Set(Object.keys(shim));
     const pendingModules = modules.map(async rawID => {
@@ -139,7 +139,7 @@ async function generateBundleFile(
         }
 
         // Example: Magento_Swatches/js/catalog-add-to-cart
-        if (!needsShim && !isAMD) {
+        if (!needsShim && !isAMD && !transformed) {
             transformed = wrapNonShimmedModule(id, source);
         }
 
