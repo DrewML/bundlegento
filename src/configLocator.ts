@@ -32,9 +32,7 @@ export async function configLocator({
     logger,
 }: Opts): Promise<Config> {
     const configExplorer = cosmiconfig('bundlegento');
-    logger.log(
-        configPath ? 'Reading config file' : 'Looking for configuration file',
-    );
+    logger.log(configPath ? 'Reading config file' : 'Looking for config file');
     const config = configPath
         ? await configExplorer.load(configPath)
         : await configExplorer.search(process.cwd());

@@ -1,3 +1,8 @@
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
 const {
     wrapTextModule,
     isAMDWithDefine,
@@ -29,7 +34,7 @@ console.log(\\"Hello World\\");"
 
 test('wrapShimmedModule injects non-AMD module into define body with deps', () => {
     const result = wrapShimmedModule('bar', 'log("hello world");', {
-        deps: ['log'],
+        bar: ['log'],
     });
     expect(result.toString()).toMatchInlineSnapshot(`
 "define('bar', [\\"log\\"], function() {

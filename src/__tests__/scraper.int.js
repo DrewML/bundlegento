@@ -14,6 +14,7 @@ const logger = {
     warn() {},
     error() {},
 };
+const objToMap = o => new Map(Object.entries(o));
 
 test('Fetches all loaded dependencies on a page', async () => {
     const { url, close } = await createTestServer('basic');
@@ -32,9 +33,11 @@ test('Fetches all loaded dependencies on a page', async () => {
         { logger },
     );
     await close();
-    expect(groups).toEqual({
-        test: new Set(['b', 'a', 'main']),
-    });
+    expect(groups).toEqual(
+        objToMap({
+            test: new Set(['b', 'a', 'main']),
+        }),
+    );
 });
 
 test('Fetches correct dependencies for multiple pages/groups', async () => {
@@ -71,40 +74,42 @@ test('Fetches correct dependencies for multiple pages/groups', async () => {
         { logger },
     );
     await close();
-    expect(groups).toEqual({
-        cart: new Set([
-            'cart',
-            'libs/jquery',
-            'libs/cart-api',
-            'libs/colorpicker',
-            'libs/shipping',
-            'libs/fancyselect',
-        ]),
-        category: new Set([
-            'category',
-            'libs/jquery',
-            'libs/tooltip',
-            'libs/options',
-            'libs/magnifier',
-            'libs/grid',
-        ]),
-        cms: new Set([
-            'cms',
-            'libs/jquery',
-            'libs/tooltip',
-            'libs/colorpicker',
-            'libs/carousel',
-            'libs/calendar',
-        ]),
-        product: new Set([
-            'product',
-            'libs/jquery',
-            'libs/swatches',
-            'libs/colorpicker',
-            'libs/magnifier',
-            'libs/addtocart',
-        ]),
-    });
+    expect(groups).toEqual(
+        objToMap({
+            cart: new Set([
+                'cart',
+                'libs/jquery',
+                'libs/cart-api',
+                'libs/colorpicker',
+                'libs/shipping',
+                'libs/fancyselect',
+            ]),
+            category: new Set([
+                'category',
+                'libs/jquery',
+                'libs/tooltip',
+                'libs/options',
+                'libs/magnifier',
+                'libs/grid',
+            ]),
+            cms: new Set([
+                'cms',
+                'libs/jquery',
+                'libs/tooltip',
+                'libs/colorpicker',
+                'libs/carousel',
+                'libs/calendar',
+            ]),
+            product: new Set([
+                'product',
+                'libs/jquery',
+                'libs/swatches',
+                'libs/colorpicker',
+                'libs/magnifier',
+                'libs/addtocart',
+            ]),
+        }),
+    );
 });
 
 function createTestServer(fixtureName) {

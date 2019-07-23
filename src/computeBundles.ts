@@ -59,8 +59,10 @@ export function computeBundles(entriesByGroup: EntriesByGroup, opts: Opts) {
             finalGroups.get(group2)!.dependsOnGroups.add(key);
         }
 
-        // Move to the global shared file
+        // TODO: Either make this threshold configurable,
+        // or use a heuristic, something like (total bundles - 2)
         if (groups.size > 2) {
+            // Move to the global shared file
             finalGroups.get('all')!.modules.add(dep);
         }
     }

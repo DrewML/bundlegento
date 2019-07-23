@@ -106,7 +106,7 @@ const cache = new Map<string, MagicString>();
 async function generateBundleFile(
     modules: string[],
     resolver: Resolver,
-    shim:{ [key: string]: RequireShim | string[] } = {},
+    shim: { [key: string]: RequireShim | string[] } = {},
 ) {
     const shimmedModules = new Set(Object.keys(shim));
     const pendingModules = modules.map(async rawID => {
@@ -119,7 +119,7 @@ async function generateBundleFile(
 
         let { source, id, plugins } = await getModuleDetails(rawID, resolver);
 
-        let transformed;
+        let transformed: MagicString | undefined;
         const needsShim = shimmedModules.has(id);
         const isAMD = isAMDWithDefine(source);
 
@@ -134,6 +134,8 @@ async function generateBundleFile(
         }
 
         // Example: matchMedia
+        // Note: We do not apply shims to modules
+        // that are already AMD modules (intentional)
         if (needsShim && !isAMD) {
             transformed = wrapShimmedModule(id, source, shim);
         }
