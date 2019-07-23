@@ -34,7 +34,7 @@ export async function runForProject({
     });
     // TODO: Cache results here, and add a `--lastRun` option to bundle
     // based on the previously-fetched data
-    const bundleSpec = computeBundles(groups, { logger });
+    const bundleSpec = computeBundles(groups);
 
     await p(writeFile)(join(__dirname, '../output.txt'), serialize(bundleSpec));
     await createBundles({ config, bundleSpec, requireConfig, logger });

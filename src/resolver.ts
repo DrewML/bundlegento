@@ -22,6 +22,10 @@ export type Resolver = (id: string) => string;
 // but doing cheap caching for now just in case. Cache key is
 // by `requireConfig` identity (===)
 const cache = new Map<RequireConfig, Resolver>();
+/**
+ * @summary Create a file path resolver using the API exposed by RequireJS,
+ *          taking into account paths/map/etc config
+ */
 export function createResolver(requireConfig: RequireConfig, baseDir: string) {
     if (cache.has(requireConfig)) return cache.get(requireConfig) as Resolver;
 

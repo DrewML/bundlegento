@@ -4,13 +4,18 @@
  */
 
 import jsesc from 'jsesc';
-import MagicString, { Bundle } from 'magic-string';
+import MagicString from 'magic-string';
 
 // Tip: Can verify source-mappings are working correctly
 // using http://evanw.github.io/source-map-visualization/
 
 const RE_DEFINE = /define\s*\(/;
 
+/**
+ * @summary Wrap a text module (commonly .html) in an AMD module,
+ *          escaping any code that would break out of the string
+ *          boundaries
+ */
 export function wrapTextModule(id: string, source: string) {
     const [before, after] = `define('text!${id}', function() {
     return 'SPLIT';
@@ -32,16 +37,25 @@ export function isAMDWithDefine(source: string) {
 }
 
 const RE_NAMED_AMD = /define\s*\(\s*['"]/;
+/**
+ * @summary Determine if a module is already a named AMD module.
+ *          A named AMD module will have a string literal as the first
+ *          argument passed
+ */
 export function isNamedAMD(source: string) {
     const match = RE_NAMED_AMD.exec(source);
     return !!match;
 }
 
-// Non-AMD modules typically expect that they're running
-// in the top-most lexical scope. We inject a separate `define`
-// to prevent the runtime RequireJS lib from fetching
-// a module it thinks hasn't been loaded, but we keep
-// the module code itself in the top-most scope
+/**
+ * @summary Wrap a non-AMD module in code that will make it (mostly)
+ *          AMD-compatible in the bundle.
+ *
+ *          Non-AMD modules typically expect that they're running in the
+ *          top-most lexical scope. We inject a separate `define` to prevent
+ *          the runtime RequireJS lib from fetching a module it thinks hasn't
+ *          been loaded, but we keep the module code itself in the top-most scope
+ */
 export function wrapNonShimmedModule(id: string, source: string) {
     const str = new MagicString(source);
     return str.prepend(`define('${id}', function() {
@@ -50,6 +64,10 @@ export function wrapNonShimmedModule(id: string, source: string) {
 // Original code for non-AMD module ${id}\n`);
 }
 
+/**
+ * @summary Rewrite a non-AMD module as an AMD module, using the provided
+ *          shim config dependencies and exports values
+ */
 export function wrapShimmedModule(
     id: string,
     source: string,
@@ -71,6 +89,9 @@ export function wrapShimmedModule(
     return new MagicString(source).prepend(before).append(after);
 }
 
+/**
+ * @summary Add the provided id as the first argument to a `define` call
+ */
 export function renameModule(id: string, source: string) {
     const str = new MagicString(source);
     const { 0: match, index } = source.match(RE_DEFINE) || [];

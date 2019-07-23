@@ -18,6 +18,10 @@ const IGNORE = new Set([
 ]);
 
 type Opts = { logger: Logger };
+/**
+ * @summary Scrapes the provided URLs for a Magento store, returning
+ *          module usage data per-page, along with the require configuration
+ */
 export async function getModulesByGroups(config: Config, { logger }: Opts) {
     const groups = new Map(
         Object.keys(config.groups).map(

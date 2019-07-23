@@ -3,6 +3,12 @@
  * See COPYING.txt for license details.
  */
 
+/**
+ * @summary Implementing `require.onResourceLoad` seems to be the best
+ *          option for seeing assets we care about. Because Magento eagerly
+ *          starts fetching modules on page load, we need to intercept the
+ *          RequireJS global _immediately_, before Magento gets to it
+ */
 if (!window.requirejs) {
     let value;
     Object.defineProperty(window, 'requirejs', {
@@ -14,8 +20,9 @@ if (!window.requirejs) {
             if (value.__loaded__) return;
 
             value.__loaded__ = [];
+            // https://github.com/requirejs/requirejs/wiki/internal-api:-onresourceload
             value.onResourceLoad = (_, map) => {
-                // IgnoreSide-effect of Magento's mixin feature
+                // Ignore side-effect of Magento's mixin feature
                 // https://github.com/magento/magento2/blob/6a9860/lib/web/mage/requirejs/mixins.js#L30
                 if (map.id.startsWith('mixins!')) return;
 

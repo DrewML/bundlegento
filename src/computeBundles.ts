@@ -4,7 +4,6 @@
  */
 
 import { mergeSets } from './mergeSets';
-import { Logger } from './logger';
 
 type EntriesByGroup = Map<string, Set<string>>;
 
@@ -13,9 +12,11 @@ export type Group = {
     modules: Set<string>;
     dependsOnGroups: Set<string>;
 };
-
-type Opts = { logger?: Logger };
-export function computeBundles(entriesByGroup: EntriesByGroup, opts: Opts) {
+/**
+ * @summary Splits modules into separate chunks, and creates shared chunks
+ *          for modules that are shared. See docs/diagram.png for an illustration
+ */
+export function computeBundles(entriesByGroup: EntriesByGroup) {
     const allDeps: string[] = Array.from(
         mergeSets([...entriesByGroup.values()]),
     );

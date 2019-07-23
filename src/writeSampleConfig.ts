@@ -10,6 +10,9 @@ import { join } from 'path';
 
 const sampleConfigPath = require.resolve('../samples/.bundlegentorc');
 
+/**
+ * @summary Copy the sample config file into the user's cwd
+ */
 export async function writeSampleConfig() {
     const dest = join(process.cwd(), '.bundlegentorc.yml');
     await p(copyFile)(sampleConfigPath, dest);

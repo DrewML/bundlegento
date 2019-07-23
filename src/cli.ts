@@ -59,6 +59,7 @@ if (flags.init) {
     runForProject({ configPath: flags.config, logger }).catch(errorAndExit);
 }
 
+// TODO: Just switch to an existing lib with log-levels
 function log(type: 'log' | 'warn' | 'error', ...values: any[]) {
     if (type === 'log' && flags.verbose) {
         console.log(chalk.cyan('LOG: '), ...values);

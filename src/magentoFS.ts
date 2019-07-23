@@ -21,6 +21,9 @@ export async function themeExists(staticFolderPath: string, theme: Theme) {
     return !err;
 }
 
+/**
+ * @summary Find all _deployed_ languages for a single theme
+ */
 export async function getAllLanguages(staticContentDir: string, theme: Theme) {
     const vendorsRoot = await getVendorsRoot(staticContentDir);
     const themeDir = join(vendorsRoot, theme.vendor, theme.name);
@@ -30,6 +33,9 @@ export async function getAllLanguages(staticContentDir: string, theme: Theme) {
     return themes.filter(t => reLang.test(t));
 }
 
+/**
+ * @summary Find the dir with all vendors in pub/static
+ */
 async function getVendorsRoot(staticContentDir: string) {
     // Note: When a relative path is used, maybe we
     // should be looking relative to the config file

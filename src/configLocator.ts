@@ -26,7 +26,11 @@ export type Config = {
 };
 
 type Opts = { configPath?: string; logger: Logger };
-// TODO: JSON Schema + validation
+
+/**
+ * @summary Find the closest .bundlegentorc config file
+ * @todo JSON schema + validation
+ */
 export async function configLocator({
     configPath,
     logger,

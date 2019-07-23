@@ -10,5 +10,8 @@ if (majorVersion < 10) {
     process.exit(1);
 }
 
+// Map errors back to TypeScript source files,
+// to ensure stacks in bug reports are useful
 require('source-map-support/register');
+
 require('../dist/cli');
