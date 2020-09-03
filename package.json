@@ -56,7 +56,7 @@
     "jsesc": "^2.5.2",
     "magic-string": "^0.25.2",
     "meow": "^5.0.0",
-    "puppeteer": "^1.12.2",
+    "puppeteer": "^1.13.0",
     "requirejs": "^2.3.6",
     "source-map-support": "^0.5.12"
   }
